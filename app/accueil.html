@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accueil</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/main.js" defer type="module"></script>
+</head>
+<body data-page="accueil">
+
+  <header>
+    <h1>Accueil</h1>
+    <nav class="nav">
+      <button class="tab-btn_entree">Entrée</button>
+      <button class="tab-btn_sortie">Sortie</button>
+    </nav>
+  </header>  
+
+  <main>
+
+    <!-- Loader affiché pendant les appels API -->
+    <div id="loader" class="hidden">
+      <div>Chargement...</div>
+    </div>
+
+    <section class="enter-wrapper">
+
+      <h2>Identification</h2>
+
+      <form action="" id="enter-form">
+        <label for="nom"></label>
+        <input type="text" name="nom" placeholder="Nom" required>
+
+        <label for="prenom"></label>
+        <input type="text" name="prenom" placeholder="Prénom" required>
+
+        <label for="email"></label>
+        <input type="email" name="email" placeholder="E-mail" required>
+
+        <label for="type">Visite</label>
+        <input type="radio" name="type" value="visite" required class="type-visite">
+        <label for="type">Formation</label>
+        <input type="radio" name="type" value="formation" required class="type-formation">
+
+        <label for="details"></label>
+        <select name="details" class="details-formation hidden" required>
+          <option value="" selected disabled>-- Sélectionnez une formation --</option>
+        </select>
+
+        <label for="details"></label>
+        <select name="details" class="details-personnel hidden" required>
+          <option value="" selected disabled>-- Sélectionnez un membre du personnel --</option>
+        </select>
+
+        <input type="hidden" name="date">
+        <input type="hidden" name="heure_entree">
+
+        <button type="submit">Valider</button>
+      </form>
+
+      <a href="" id="showRetourBtn">Vous avez un QR Code ou vous êtes déjà enregistré ?</a>
+
+      <form action="" class="hidden" id="retour-form">
+        <label for="email">Rechercher par email</label>
+        <input type="email" name="email" placeholder="Votre email" required>
+        <button type="submit">Rechercher</button>
+      </form>
+
+    </section>
+
+    <section class="exit-wrapper hidden">
+
+      <h2>Sortie</h2>
+
+      <form action="" id="exit-form">
+        <label for="email">Saisisser votre email</label>
+        <input type="email" name="email" placeholder="Votre email" required>
+        <button type="submit">Valider</button>
+      </form>
+
+    </section>
+
+  </main>
+
+  <footer>
+
+  </footer>
+
+</body>
+</html>

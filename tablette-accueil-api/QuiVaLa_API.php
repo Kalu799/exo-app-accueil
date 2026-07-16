@@ -20,7 +20,7 @@ add_action('init', 'quivala_cors');
 
 function quivala_cors(){
 
-    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Origin: http://127.0.0.1:5500/app/accueil.html");
 
     header(
         "Access-Control-Allow-Methods: GET, POST, OPTIONS"
