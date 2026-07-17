@@ -393,7 +393,7 @@ function printBadge(infos, visite) {
       `${personnel.acf['personnels-nom']} ${personnel.acf['personnels-prenom']}`;
 
     badgeLocal.textContent =
-      `${personnel.acf['personnels-local']} - ${personnel.acf['personnels-telephone']}`;
+      `${personnel.acf['personnels-local']} - +${personnel.acf['personnels-telephone']}`;
   }
 
   // génération du QR
