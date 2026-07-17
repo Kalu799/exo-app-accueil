@@ -1,3 +1,338 @@
+/* ==========================================================================
+   Variables de Design (Style épuré type Tailwind)
+   ========================================================================== */
+:root {
+  --bg-app: #f3f4f6;          /* bg-gray-100 */
+  --bg-card: #ffffff;
+  --text-main: #1f2937;        /* text-gray-800 */
+  --text-light: #4b5563;       /* text-gray-600 */
+  --primary: #ef9005;          /* text-blue-600 / bg-blue-600 */
+  --primary-hover: #b4720f;    /* hover:bg-blue-700 */
+  --danger: #ef4444;           /* bg-red-500 */
+  --danger-hover: #dc2626;     /* hover:bg-red-600 */
+  --border-color: #e5e7eb;     /* border-gray-200 */
+  --radius: 0.75rem;           /* rounded-xl */
+}
+
+/* ==========================================================================
+   Reset & Configuration Écran
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+/* Cache les éléments .hidden */
 .hidden {
+  display: none !important;
+}
+
+/* Le conteneur principal (Format Borne / Tablette) */
+.content {
+  max-width: 768px; /* max-w-screen-md */
+  margin: 0 auto;
+  background-color: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+  overflow: hidden;
+}
+
+/* On masque le titre "Accueil" d'origine pour coller les onglets en haut */
+.content > h1 {
   display: none;
+}
+
+/* ==========================================================================
+   Navigation par Onglets (Placés tout en haut du bloc)
+   ========================================================================== */
+.nav {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 1.125rem; /* text-lg */
+  font-weight: 600; /* font-semibold */
+}
+
+.nav button {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 0.75rem 0; /* py-3 */
+  cursor: pointer;
+  color: #9ca3af; /* text-gray-400 de base */
+  transition: color 0.2s ease;
+  text-align: center;
+}
+
+/* ==========================================================================
+   Gestion Dynamique des Onglets (Entrée / Sortie) - FIX RADICAL
+   ========================================================================= */
+/* Style de base (neutre/grisé) pour les deux boutons */
+.nav button {
+  color: #9ca3af;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+/* --- CAS 1 : SI L'ENTRÉE EST AFFICHÉE --- */
+/* Quand .exit-wrapper est caché (classe .hidden), c'est qu'on est sur "Entrée" */
+body:has(.exit-wrapper.hidden) .nav button.tab-btn_entree {
+  color: var(--primary) !important;
+  border-bottom-color: var(--primary) !important;
+}
+
+/* --- CAS 2 : SI LA SORTIE EST AFFICHÉE --- */
+/* Quand .enter-wrapper est caché (classe .hidden), c'est qu'on est sur "Sortie" */
+body:has(.enter-wrapper.hidden) .nav button.tab-btn_sortie {
+  color: var(--danger) !important;
+  border-bottom-color: var(--danger) !important;
+}
+
+/* Effet au survol (hover) pour garder l'interface vivante */
+.nav button.tab-btn_entree:hover {
+  color: var(--primary);
+}
+.nav button.tab-btn_sortie:hover {
+  color: var(--danger);
+}
+
+/* ==========================================================================
+   Sections internes (Padding de la boîte)
+   ========================================================================== */
+.enter-wrapper, .exit-wrapper {
+  padding: 1.5rem; /* p-6 */
+}
+
+h2 {
+  font-size: 1.25rem; /* text-xl */
+  font-weight: 700; /* font-bold */
+  margin-bottom: 1rem; /* mb-4 */
+}
+
+.enter-wrapper h2 { color: #ef9005; } /* text-blue-700 */
+.exit-wrapper h2 { color: #dc2626; }  /* text-red-600 */
+
+/* ==========================================================================
+   Formulaires & Inputs (Style @apply input)
+   ========================================================================== */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* space-y-4 */
+  text-align: left;
+}
+
+input[type="text"],
+input[type="email"],
+select {
+  width: 100%;
+  border: 2px solid #e5e7eb; /* border-gray-200 border-2 */
+  border-radius: 0.375rem; /* rounded */
+  padding: 0.5rem 0.75rem; /* px-3 py-2 */
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+input:focus, select:focus {
+  border-color: #60a5fa; /* focus:ring-blue-400 */
+  box-shadow: 0 0 0 2px #93c5fd;
+}
+
+/* ==========================================================================
+   Alignement des Boutons Radio (Visite / Formation) - FIX DÉFINITIF
+   ========================================================================== */
+/* 1. On cible le tout premier label (celui qui affiche "Visite") */
+form > label[for="type"]:first-of-type {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+  margin-right: 1.5rem; /* Crée l'espace avec le bloc d'à côté */
+}
+
+/* 2. On cible le deuxième label (celui qui affiche "Formation") */
+form > input[type="radio"].type-visite + label[for="type"] {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+/* 3. On force les ronds (inputs) à venir se coller proprement AVANT leur texte */
+input[type="radio"].type-visite {
+  margin-right: 0.4rem; /* Espace entre le rond et le mot "Visite" */
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+input[type="radio"].type-formation {
+  margin-right: 0.4rem; /* Espace entre le rond et le mot "Formation" */
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--primary);
+  cursor: pointer;
+  
+  /* Astuce : On décale l'input formation pour qu'il passe physiquement avant son propre label */
+  float: left; 
+}
+
+/* On nettoie les selects pour qu'ils retournent sagement à la ligne en dessous */
+.details-formation,
+.details-personnel {
+  margin-top: 0.75rem;
+  clear: both;
+  display: block;
+}
+
+/* Wrapper fictif si tu veux regrouper tes radios comme dans le modèle */
+.radio-group {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+input[type="radio"] {
+  accent-color: var(--primary);
+  margin-right: 0.5rem;
+  transform: scale(1.1);
+}
+
+/* ==========================================================================
+   Boutons d'action
+   ========================================================================== */
+button[type="submit"] {
+  width: 100%;
+  color: white;
+  padding: 0.5rem 1rem; /* py-2 */
+  border-radius: 0.5rem; /* rounded-lg */
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#enter-form button[type="submit"] { background-color: var(--primary); }
+#enter-form button[type="submit"]:hover { background-color: var(--primary-hover); }
+
+#exit-form button[type="submit"] { background-color: var(--danger); }
+#exit-form button[type="submit"]:hover { background-color: var(--danger-hover); }
+
+/* Lien "Déjà enregistré ?" */
+#showRetourBtn {
+  display: block;
+  text-align: center;
+  font-size: 0.875rem; /* text-sm */
+  color: var(--primary);
+  text-decoration: underline;
+  cursor: pointer;
+  padding-top: 0.5rem; /* pt-2 */
+}
+
+/* Zone Retour / Scan (Fausse grille) */
+#retour-form {
+  margin-top: 1.5rem;
+  background-color: #f9fafb; /* bg-gray-50 */
+  border: 1px solid var(--border-color);
+  padding: 1rem;
+  border-radius: 0.375rem;
+}
+
+/* ==========================================================================
+   Badge Écran (Masqué par défaut pour ne pas polluer l'interface)
+   ========================================================================== */
+.etiquette {
+  display: none;
+}
+
+/* ==========================================================================
+   STYLE D'IMPRESSION (Strictement identique à ton modèle)
+   ========================================================================== */
+@media print {
+  /* Masque toute l'interface de la tablette */
+  .screen-only, header, footer, .content, #loader {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Force l'affichage de l'étiquette pour l'impression */
+  .etiquette {
+    display: flex !important;
+    width: 8.5cm;
+    height: 5.5cm;
+    padding: 1cm;
+    font-family: sans-serif;
+    page-break-after: always;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    justify-content: flex-start;
+    gap: 0.5cm;
+  }
+
+  .etiquette .qr {
+    width: 3.5cm;
+    height: 3.5cm;
+    border: 1px dashed #aaa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: #666;
+    flex-shrink: 0;
+  }
+
+  .etiquette .content {
+    display: block;
+    background: none;
+    box-shadow: none;
+    padding: 0;
+    text-align: left;
+  }
+
+  #badge-nom {
+    font-weight: bold;
+    font-size: 1.125rem; /* text-lg */
+  }
+
+  #badge-info, #badge-local {
+    font-size: 0.875rem; /* text-sm */
+    margin-top: 0.25cm;
+  }
+}
+
+/* ==========================================================================
+   Loader
+   ========================================================================== */
+#loader {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 9999;
+}
+#loader > div {
+  padding: 1rem 2rem; background: white; border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-weight: bold; color: var(--primary);
 }
