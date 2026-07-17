@@ -96,6 +96,7 @@ async function optionFormations(container) {
         infos = {
           formationIntitule: formation.acf['formations-intitule'],
           formationId: formation.id,
+          formationKey: formation.key,
         };
 
         return `
@@ -137,6 +138,7 @@ async function optionPersonnels(container) {
           personnelPrenom: personnel.acf['personnels-prenom'],
           personnelLocal: personnel.acf['personnels-local'],
           personnelId: personnel.id,
+          personnelKey: personnel.key
         };
 
         return `
@@ -265,6 +267,8 @@ function bindEnterForm(loader, form, retourForm) {
 
       // 5. On confirme la visite et on lance le print de l'étiquette
       alert('Visite enregistrée')
+      console.log(payload)
+      printBadge(payload, visite.visite)
 
       // 6. On cache le form de retour si il était ouvert
       hide(retourForm)
@@ -353,4 +357,57 @@ function bindRetourForm(loader, retourForm, enterForm) {
       hide(loader);
     }
   });
+}
+
+/**
+ * Gère le print.
+ */
+function printBadge(infos, visite) {
+
+  const page = qs('.content')
+
+  const badge = qs('#badge')
+  const badgeNom = qs('#badge-nom');
+  const badgeInfo = qs('#badge-info');
+  const badgeLocal = qs('#badge-local');
+  const qr = qs('.qr');
+
+  badgeNom.textContent = `${visite.nom} ${visite.prenom}`;
+
+  if (visite.type === 'formation') {
+
+    const formation = formations.find(f => f.id == visite.details);
+
+    badgeInfo.textContent =
+      formation.acf['formations-intitule'];
+
+    badgeLocal.textContent =
+      formation.acf['formations-local'];
+  }
+
+  if (visite.type === 'visite') {
+
+    const personnel = personnels.find(p => p.id == visite.details);
+
+    badgeInfo.textContent =
+      `${personnel.acf['personnels-nom']} ${personnel.acf['personnels-prenom']}`;
+
+    badgeLocal.textContent =
+      `${personnel.acf['personnels-local']} - ${personnel.acf['personnels-telephone']}`;
+  }
+
+  // génération du QR
+  qr.innerHTML = '';
+
+  //    new QRCode(qr, {
+  //        text: visite['id-visiteur'],
+  //        width: 120,
+  //        height: 120
+  //    });
+
+  hide(page)
+  show(badge)
+  window.print();
+  hide(badge)
+  show(page)
 }
