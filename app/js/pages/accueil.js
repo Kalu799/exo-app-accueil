@@ -30,8 +30,8 @@ export async function initAccueil() {
   // On connecte les événements de la page.
   bindSessionActions(showRetourBtn, showEntreeBtn, showSortieBtn, enterWrapper, retourForm, exitWrapper)
   bindEnterForm(loader, enterForm)
-  //bindRetourForm(loader, retourForm)
-  //bindExitForm(loader, exitForm)
+  bindRetourForm(loader, retourForm)
+  bindExitForm(loader, exitForm)
 
   // On charge les données de départ.
   await optionFormations(listingFormations)
@@ -193,12 +193,12 @@ radios.forEach(radio => {
 });
 
 /**
- * Prépare les données attendues par WordPress pour entrer un visiteur
+ * Prépare les données attendues par WordPress pour entrer un visiteur / une visite
  *
  * @param {object} formData - Données venant du formulaire.
  * @returns {object} Objet compatible avec l'API REST WordPress.
  */
-export function buildPayload(formData) {
+export function buildEnterPayload(formData) {
 
   const now = new Date();
 
@@ -219,13 +219,30 @@ export function buildPayload(formData) {
     heure_entree: formData.heure_entree
   };
 
-  console.log(payload)
+  //console.log(payload)
 
   return payload;
 }
 
 /**
- * Gère le formulaire d'ajout d'une entreprise.
+ * Prépare les données attendues par WordPress pour entrer une sortie / un retour
+ *
+ * @param {object} formData - Données venant du formulaire.
+ * @returns {object} Objet compatible avec l'API REST WordPress.
+ */
+export function buildExitRetourPayload(formData) {
+
+  const payload = {
+    email: formData.email,
+  };
+
+  //console.log(payload)
+
+  return payload;
+}
+
+/**
+ * Gère le formulaire d'entrée.
  */
 function bindEnterForm(loader, form) {
   form.addEventListener('submit', async function (event) {
@@ -238,19 +255,63 @@ function bindEnterForm(loader, form) {
       const formData = getFormData(form);
 
       // 2. Construire l'objet attendu par WordPress.
-      const payload = buildPayload(formData);
+      const payload = buildEnterPayload(formData);
 
-      // 3. Créer l'entreprise dans WordPress.
-      const formation = await accueilApi.postEntree(payload);
+      // 3. Créer le visiteur (si inexistant) et la visite dans WordPress.
+      const visite = await accueilApi.postEntree(payload);
 
       // 4. Nettoyer le formulaire
       form.reset();
 
+      // 5. On confirme la visite et on lance le print de l'étiquette
+      alert('Visite enregistrée')
+
     } catch (error) {
-      alert(error.message || 'Impossible de créer ce visiteur.');
+      alert(error.message || 'Impossible de créer ce visiteur / cette visite.');
 
     } finally {
       hide(loader);
     }
   });
+}
+
+/**
+ * Gère le formulaire de sortie.
+ */
+function bindExitForm(loader, form) {
+    form.addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    show(loader);
+
+    try {
+      // 1. Récupérer les données du formulaire.
+      const formData = getFormData(form);
+
+      // 2. Construire l'objet attendu par WordPress.
+      const payload = buildExitRetourPayload(formData);
+
+      // 3. Modifie la sortie dans WordPress.
+      const sortie = await accueilApi.postSortie(payload);
+
+      // 4. Nettoyer le formulaire
+      form.reset();
+
+      // 5. On confirme la sortie
+      alert('Sortie enregistrée')
+
+    } catch (error) {
+      alert(error.message || 'Impossible de clôturer cette visite.');
+
+    } finally {
+      hide(loader);
+    }
+  });
+}
+
+/**
+ * Gère le formulaire de retour.
+ */
+function bindRetourForm(loader, form) {
+
 }
