@@ -29,9 +29,9 @@ export async function initAccueil() {
 
   // On connecte les événements de la page.
   bindSessionActions(showRetourBtn, showEntreeBtn, showSortieBtn, enterWrapper, retourForm, exitWrapper)
-  bindEnterForm(loader, enterForm)
-  bindRetourForm(loader, retourForm)
-  bindExitForm(loader, exitForm)
+  bindEnterForm(loader, enterForm, retourForm)
+  bindRetourForm(loader, retourForm, enterForm)
+  bindExitForm(loader, exitForm, enterWrapper, exitWrapper)
 
   // On charge les données de départ.
   await optionFormations(listingFormations)
@@ -69,7 +69,7 @@ function bindSessionActions(showRetourBtn, showEntreeBtn, showSortieBtn, enterWr
  */
 
 async function optionFormations(container) {
-  formations =  await accueilApi.getAllFormations()
+  formations = await accueilApi.getAllFormations()
 
   if (!formations.length) {
     container.innerHTML = '<option disabled >Aucunes formations</option>';
@@ -82,9 +82,9 @@ async function optionFormations(container) {
   let date = new Date().toLocaleDateString('fr-BE')
 
   formations.forEach((formation) => {
-    if(formation.acf['formations-date'] === date) {
-        formationsAuj.push(formation)
-      }
+    if (formation.acf['formations-date'] === date) {
+      formationsAuj.push(formation)
+    }
   })
 
   try {
@@ -126,7 +126,7 @@ async function optionPersonnels(container) {
 
   //console.log("personnels : " + JSON.stringify(personnels))
 
-    try {
+  try {
     const html = await Promise.all(
       personnels.map(async function (personnel, index) {
 
@@ -162,33 +162,33 @@ const personnelSelect = document.querySelector('.details-personnel');
 
 radios.forEach(radio => {
 
-    radio.addEventListener('change', () => {
+  radio.addEventListener('change', () => {
 
-        if (radio.value === 'formation' && radio.checked) {
+    if (radio.value === 'formation' && radio.checked) {
 
-            formationSelect.classList.remove('hidden');
-            personnelSelect.classList.add('hidden');
+      formationSelect.classList.remove('hidden');
+      personnelSelect.classList.add('hidden');
 
-            formationSelect.required = true;
-            personnelSelect.required = false;
+      formationSelect.required = true;
+      personnelSelect.required = false;
 
-            personnelSelect.selectedIndex = 0;
+      personnelSelect.selectedIndex = 0;
 
-        }
+    }
 
-        if (radio.value === 'visite' && radio.checked) {
+    if (radio.value === 'visite' && radio.checked) {
 
-            personnelSelect.classList.remove('hidden');
-            formationSelect.classList.add('hidden');
+      personnelSelect.classList.remove('hidden');
+      formationSelect.classList.add('hidden');
 
-            personnelSelect.required = true;
-            formationSelect.required = false;
+      personnelSelect.required = true;
+      formationSelect.required = false;
 
-            formationSelect.selectedIndex = 0;
+      formationSelect.selectedIndex = 0;
 
-        }
+    }
 
-    });
+  });
 
 });
 
@@ -244,7 +244,7 @@ export function buildExitRetourPayload(formData) {
 /**
  * Gère le formulaire d'entrée.
  */
-function bindEnterForm(loader, form) {
+function bindEnterForm(loader, form, retourForm) {
   form.addEventListener('submit', async function (event) {
     event.preventDefault();
 
@@ -266,6 +266,9 @@ function bindEnterForm(loader, form) {
       // 5. On confirme la visite et on lance le print de l'étiquette
       alert('Visite enregistrée')
 
+      // 6. On cache le form de retour si il était ouvert
+      hide(retourForm)
+
     } catch (error) {
       alert(error.message || 'Impossible de créer ce visiteur / cette visite.');
 
@@ -278,8 +281,8 @@ function bindEnterForm(loader, form) {
 /**
  * Gère le formulaire de sortie.
  */
-function bindExitForm(loader, form) {
-    form.addEventListener('submit', async function (event) {
+function bindExitForm(loader, form, enterWrapper, exitWrapper) {
+  form.addEventListener('submit', async function (event) {
     event.preventDefault();
 
     show(loader);
@@ -300,6 +303,10 @@ function bindExitForm(loader, form) {
       // 5. On confirme la sortie
       alert('Sortie enregistrée')
 
+      // 6. On retourne sur "entrée"
+      hide(exitWrapper)
+      show(enterWrapper)
+
     } catch (error) {
       alert(error.message || 'Impossible de clôturer cette visite.');
 
@@ -312,6 +319,38 @@ function bindExitForm(loader, form) {
 /**
  * Gère le formulaire de retour.
  */
-function bindRetourForm(loader, form) {
+function bindRetourForm(loader, retourForm, enterForm) {
+  retourForm.addEventListener('submit', async function (event) {
+    event.preventDefault();
 
+    show(loader);
+
+    try {
+      // 1. Récupérer les données du formulaire.
+      const formData = getFormData(retourForm);
+
+      // 2. Construire l'objet attendu par WordPress.
+      const payload = buildExitRetourPayload(formData);
+
+      // 3. Va chercher les infos du visiteur dans WordPress
+      const retour = await accueilApi.postRetour(payload);
+      //console.log(retour.visiteur)
+
+      // 4. Nettoyer le formulaire et on le recache
+      retourForm.reset();
+      hide(retourForm)
+
+      // 5. On préremplis le formulaire d'entrée
+      enterForm.nom.value = retour.visiteur.nom
+      enterForm.prenom.value = retour.visiteur.prenom
+      enterForm.email.value = retour.visiteur.email
+
+
+    } catch (error) {
+      alert(error.message || 'Visiteur inconnu.');
+
+    } finally {
+      hide(loader);
+    }
+  });
 }
