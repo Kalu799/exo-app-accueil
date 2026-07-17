@@ -12,6 +12,8 @@ import { accueilApi } from '../api/accueilApi.js';
 let personnels = null
 let formations = null
 
+let activeScanner = null;
+
 export async function initAccueil() {
 
   // On récupère une seule fois les éléments HTML importants.
@@ -26,12 +28,17 @@ export async function initAccueil() {
   const showRetourBtn = qs('#showRetourBtn')
   const showEntreeBtn = qs('.tab-btn_entree')
   const showSortieBtn = qs('.tab-btn_sortie')
+  const scanRetourBtn = qs('#scanRetourBtn')
+  const scanSortieBtn = qs('#scanSortieBtn')
 
   // On connecte les événements de la page.
   bindSessionActions(showRetourBtn, showEntreeBtn, showSortieBtn, enterWrapper, retourForm, exitWrapper)
   bindEnterForm(loader, enterForm, retourForm)
   bindRetourForm(loader, retourForm, enterForm)
   bindExitForm(loader, exitForm, enterWrapper, exitWrapper)
+
+  bindQrScanner(scanRetourBtn, retourForm, 'reader-retour');
+  bindQrScanner(scanSortieBtn, exitForm, 'reader-sortie');
 
   // On charge les données de départ.
   await optionFormations(listingFormations)
@@ -228,19 +235,21 @@ export function buildEnterPayload(formData) {
 
 /**
  * Prépare les données attendues par WordPress pour entrer une sortie / un retour
- *
- * @param {object} formData - Données venant du formulaire.
- * @returns {object} Objet compatible avec l'API REST WordPress.
  */
 export function buildExitRetourPayload(formData) {
+  // On nettoie la valeur pour éviter qu'un espace invisible venant du scanner fasse planter l'API
+  const idVisiteur = formData['id-visiteur'] ? formData['id-visiteur'].trim() : '';
+  const email = formData.email ? formData.email.trim() : '';
 
-  const payload = {
-    email: formData.email,
-  };
+  if (idVisiteur !== '') {
+    return { 'id-visiteur': idVisiteur };
+  }
 
-  //console.log(payload)
+  if (email !== '') {
+    return { 'email': email };
+  }
 
-  return payload;
+  throw new Error("Veuillez saisir un email ou scanner un badge.");
 }
 
 /**
@@ -267,7 +276,7 @@ function bindEnterForm(loader, form, retourForm) {
 
       // 5. On confirme la visite et on lance le print de l'étiquette
       alert('Visite enregistrée')
-      console.log(payload)
+      //console.log(payload)
       printBadge(payload, visite.visite)
 
       // 6. On cache le form de retour si il était ouvert
@@ -288,32 +297,23 @@ function bindEnterForm(loader, form, retourForm) {
 function bindExitForm(loader, form, enterWrapper, exitWrapper) {
   form.addEventListener('submit', async function (event) {
     event.preventDefault();
-
     show(loader);
 
     try {
-      // 1. Récupérer les données du formulaire.
       const formData = getFormData(form);
-
-      // 2. Construire l'objet attendu par WordPress.
       const payload = buildExitRetourPayload(formData);
-
-      // 3. Modifie la sortie dans WordPress.
+      
+      console.log("Payload envoyé à l'API (Sortie) :", payload);
+      
       const sortie = await accueilApi.postSortie(payload);
 
-      // 4. Nettoyer le formulaire
       form.reset();
-
-      // 5. On confirme la sortie
-      alert('Sortie enregistrée')
-
-      // 6. On retourne sur "entrée"
-      hide(exitWrapper)
-      show(enterWrapper)
+      alert('Sortie enregistrée');
+      hide(exitWrapper);
+      show(enterWrapper);
 
     } catch (error) {
       alert(error.message || 'Impossible de clôturer cette visite.');
-
     } finally {
       hide(loader);
     }
@@ -321,38 +321,43 @@ function bindExitForm(loader, form, enterWrapper, exitWrapper) {
 }
 
 /**
- * Gère le formulaire de retour.
+ * Gère le formulaire de retour (uniquement pour pré-remplir).
  */
 function bindRetourForm(loader, retourForm, enterForm) {
   retourForm.addEventListener('submit', async function (event) {
-    event.preventDefault();
+    event.preventDefault(); // Empêche le rechargement
 
     show(loader);
 
     try {
-      // 1. Récupérer les données du formulaire.
-      const formData = getFormData(retourForm);
+      const emailValue = retourForm.elements["email"]?.value.trim() || '';
+      const idVisiteurValue = retourForm.elements["id-visiteur"]?.value.trim() || '';
 
-      // 2. Construire l'objet attendu par WordPress.
-      const payload = buildExitRetourPayload(formData);
+      let payload = {};
+      if (idVisiteurValue) {
+        payload["id-visiteur"] = idVisiteurValue;
+      } else if (emailValue) {
+        payload["email"] = emailValue;
+      } else {
+        throw new Error("Veuillez saisir un email ou scanner un badge.");
+      }
 
-      // 3. Va chercher les infos du visiteur dans WordPress
+      // 1. On appelle uniquement l'API de retour (qui renvoie les infos visiteur)
       const retour = await accueilApi.postRetour(payload);
-      //console.log(retour.visiteur)
 
-      // 4. Nettoyer le formulaire et on le recache
+      // 2. On remplit les champs du formulaire d'entrée
+      enterForm.elements["nom"].value = retour.visiteur.nom;
+      enterForm.elements["prenom"].value = retour.visiteur.prenom;
+      enterForm.elements["email"].value = retour.visiteur.email;
+
+      // 3. On ferme le formulaire de recherche/retour
       retourForm.reset();
-      hide(retourForm)
-
-      // 5. On préremplis le formulaire d'entrée
-      enterForm.nom.value = retour.visiteur.nom
-      enterForm.prenom.value = retour.visiteur.prenom
-      enterForm.email.value = retour.visiteur.email
-
+      hide(retourForm);
+      
+      alert('Informations chargées ! Vous pouvez maintenant valider l\'entrée.');
 
     } catch (error) {
       alert(error.message || 'Visiteur inconnu.');
-
     } finally {
       hide(loader);
     }
@@ -399,15 +404,67 @@ function printBadge(infos, visite) {
   // génération du QR
   qr.innerHTML = '';
 
-  //    new QRCode(qr, {
-  //        text: visite['id-visiteur'],
-  //        width: 120,
-  //        height: 120
-  //    });
+  new QRCode(qr, {
+    text: visite['id-visiteur'],
+    width: 120,
+    height: 120
+  });
 
   hide(page)
   show(badge)
   window.print();
   hide(badge)
   show(page)
+}
+
+/**
+ * Gère le scan d'un QR Code avec la caméra (Correction du crash Stop)
+ */
+function bindQrScanner(button, form, readerId) {
+  if (!button) return;
+
+  button.addEventListener('click', async () => {
+    if (activeScanner) {
+      // Si un scanner tourne déjà, on l'arrête avant d'en faire un autre
+      try {
+        await activeScanner.stop();
+        activeScanner = null;
+        const oldReader = document.getElementById(readerId);
+        if (oldReader) oldReader.remove();
+      } catch (e) {
+        console.log("Erreur lors du reset du scanner précédent", e);
+      }
+      return;
+    }
+
+    const input = form.querySelector('input[name="id-visiteur"]');
+    const reader = document.createElement('div');
+    reader.id = readerId;
+    form.appendChild(reader);
+
+    // On stocke l'unique instance dans la variable globale
+    activeScanner = new Html5Qrcode(readerId);
+
+    try {
+      await activeScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        async (decodedText) => {
+          console.log("QR détecté :", decodedText);
+
+          input.value = decodedText;
+
+          // On stoppe l'instance globale qui est bien en train de tourner !
+          await activeScanner.stop();
+          activeScanner = null;
+          reader.remove();
+        }
+      );
+    } catch (error) {
+      console.error(error);
+      alert("Impossible d'utiliser la caméra.");
+      if (activeScanner) activeScanner = null;
+      reader.remove();
+    }
+  });
 }

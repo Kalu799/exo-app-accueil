@@ -671,7 +671,7 @@ function quivala_sortie($request){
     $data = $request->get_json_params();
 
     $id_visiteur = sanitize_text_field(
-      $data['id_visiteur'] ?? ''
+      $data['id-visiteur'] ?? ''
     );
 
     $email = sanitize_email(
@@ -793,7 +793,7 @@ function quivala_retour($request){
 
     $id_visiteur = sanitize_text_field(
 
-        $data['id_visiteur'] ?? ''
+        $data['id-visiteur'] ?? ''
 
     );
 

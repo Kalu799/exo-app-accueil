@@ -6,6 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Accueil</title>
   <link rel="stylesheet" href="css/style.css">
+
+  <!-- biblio pour créer le QRCode -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- biblio pour scan le QRCode -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
   <script src="js/main.js" defer type="module"></script>
 </head>
 
@@ -69,7 +75,14 @@
 
         <form action="" class="hidden" id="retour-form">
           <label for="email">Rechercher par email</label>
-          <input type="email" name="email" placeholder="Votre email" required>
+          <input type="email" name="email" placeholder="Votre email">
+
+          <button type="button" id="scanRetourBtn">
+            Scanner le badge
+          </button>
+
+          <input type="text" name="id-visiteur" placeholder="Badge scanné" readonly>
+
           <button type="submit">Rechercher</button>
         </form>
 
@@ -81,7 +94,14 @@
 
         <form action="" id="exit-form">
           <label for="email">Saisisser votre email</label>
-          <input type="email" name="email" placeholder="Votre email" required>
+          <input type="email" name="email" placeholder="Votre email">
+
+          <button type="button" id="scanSortieBtn">
+            Scanner le badge
+          </button>
+
+          <input type="text" name="id-visiteur" placeholder="Badge scanné" readonly>
+
           <button type="submit">Valider</button>
         </form>
 
